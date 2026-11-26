@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827"><title>PokéScan – Karten-Scanner</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#151d31;--line:#29344e;--muted:#aab5ca;--gold:#ffd45a;--blue:#77b7ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#1a2a4a,var(--bg) 55%);font:16px system-ui,-apple-system,sans-serif;color:#f6f7fb;padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom)}
+main{max-width:760px;margin:auto;padding:20px 0 42px}.brand{display:flex;align-items:center;gap:12px;margin-bottom:18px}.ball{width:44px;height:44px;border-radius:50%;background:linear-gradient(#ef5350 0 48%,#111 48% 54%,#fff 54%);border:3px solid white;position:relative}.ball:after{content:"";position:absolute;width:12px;height:12px;border:3px solid #111;background:#fff;border-radius:50%;top:13px;left:13px}
+h1{font-size:26px;margin:0} .sub{color:var(--muted);font-size:13px}.panel{background:#151d31eF;border:1px solid var(--line);border-radius:20px;padding:16px;margin:14px 0;box-shadow:0 12px 30px #0003}
+h2{font-size:18px;margin:0 0 12px}.camera{width:100%;aspect-ratio:4/3;object-fit:cover;background:#070b14;border-radius:14px;border:1px solid var(--line)}
+.row{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}button,.filebtn{border:0;border-radius:12px;padding:12px 15px;font-weight:700;background:var(--gold);color:#171717;cursor:pointer}button.secondary,.filebtn{background:#263653;color:#f4f6fb;border:1px solid #3a4b6b}button:disabled{opacity:.45}
+input{width:100%;padding:13px;border-radius:12px;border:1px solid #3a4b6b;background:#0e1628;color:white;font-size:16px;margin:6px 0}
+.note,.status{font-size:13px;color:var(--muted);line-height:1.5}.status{min-height:20px;margin-top:9px;color:#c9d8f4}
+.result{display:grid;grid-template-columns:112px 1fr;gap:14px;align-items:start}.result img{width:100%;border-radius:10px;background:#0a0f1b}.price{font-size:27px;font-weight:800;color:var(--gold);margin:7px 0}.meta{font-size:13px;color:var(--muted);line-height:1.6}.cardname{font-size:20px;font-weight:800}.results{display:grid;gap:8px;margin-top:10px}.hit{display:flex;align-items:center;gap:10px;text-align:left;background:#202c45;color:white;border:1px solid #344565;width:100%}.hit img{width:45px;height:62px;object-fit:cover;border-radius:5px}.hit span{display:block}.hidden{display:none!important}.collection-item{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}.collection-item img{width:42px;border-radius:5px}.collection-item div{flex:1}.tiny{font-size:12px;color:var(--muted)}
+@media(max-width:420px){main{padding-top:12px}.panel{padding:13px}.result{grid-template-columns:92px 1fr}button{flex:1}}
+</style></head>
+<body><main>
+<header class="brand"><div class="ball"></div><div><h1>PokéScan</h1><div class="sub">Dein kostenloser Pokémon-Karten-Scanner</div></div></header>
+<section class="panel">
+<h2>📷 Karte scannen</h2>
+<video id="video" class="camera" autoplay playsinline muted></video>
+<div class="row"><button id="start">Kamera starten</button><button id="snap" disabled>Foto aufnehmen & erkennen</button><label class="filebtn">Bild auswählen<input id="file" type="file" accept="image/*" capture="environment" class="hidden"></label></div>
+<div class="status" id="status">Erlaube den Kamerazugriff oder wähle ein Kartenfoto aus.</div>
+<canvas id="canvas" class="hidden"></canvas>
+<p class="note">Tipp: Lege die Karte flach hin, sorge für gutes Licht und halte den Namen oben im Bild. Die Erkennung schlägt passende Karten vor – bitte kontrolliere Set und Kartennummer.</p>
+</section>
+<section class="panel">
+<h2>🔎 Karte suchen</h2><input id="search" placeholder="Pokémon-Name oder Kartennummer …"><div class="row"><button id="searchBtn">Suchen</button></div><div id="hits" class="results"></div>
+</section>
+<section class="panel hidden" id="detail">
+<h2>✨ Kartendetails</h2><div class="result"><img id="cardImg" alt="Kartenbild"><div><div class="cardname" id="cardName"></div><div class="meta" id="cardMeta"></div><div class="price" id="cardPrice">Kein Preis verfügbar</div><div class="meta" id="priceMeta"></div><div class="row"><button id="save">Zur Sammlung hinzufügen</button></div></div></div>
+</section>
+<section class="panel"><h2>📚 Meine Sammlung <span class="tiny" id="count"></span></h2><div id="collection" class="note">Noch keine Karten gespeichert.</div><p class="note">Die Sammlung bleibt lokal auf diesem Gerät gespeichert.</p></section>
+<p class="note">Kartendaten und – sofern vorhanden – Cardmarket-Preise: TCGdex API. Preise sind Richtwerte, keine Ankaufspreise. Zustand, Sprache, Edition und Foil können den tatsächlichen Wert deutlich verändern. PokéScan ist ein unabhängiges Fanprojekt und nicht mit Nintendo oder The Pokémon Company verbunden.</p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script>
+const $=id=>document.getElementById(id), api='https://api.tcgdex.net/v2/de';
+let stream=null, selected=null, db=null;
+function status(t){$('status').textContent=t}
+async function startCamera(){
+ try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});$('video').srcObject=stream;$('snap').disabled=false;status('Kamera läuft. Richte die Karte möglichst gerade aus.')}
+ catch(e){status('Kamera konnte nicht gestartet werden. Öffne die App über HTTPS und erlaube den Kamerazugriff. Du kannst stattdessen ein Foto auswählen.')}
+}
+$('start').onclick=startCamera;
+async function getDB(){
+ if(db)return db;
+ status('Kartendaten werden geladen …');
+ const r=await fetch(api+'/cards'); if(!r.ok)throw Error('Kartendaten nicht erreichbar');
+ db=await r.json(); return db;
+}
+function norm(s){return (s||'').toLocaleLowerCase('de').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'')}
+function showHits(cards){
+ const box=$('hits');box.innerHTML='';
+ if(!cards.length){box.textContent='Keine passende Karte gefunden. Suche mit einem kürzeren Namen.';return}
+ cards.slice(0,12).forEach(c=>{const b=document.createElement('button');b.className='hit';let img=c.image?c.image+'/low.webp':'';b.innerHTML=`${img?`<img src="${img}" alt="">`:''}<span><b>${esc(c.name)}</b><small class="tiny"> ${esc(c.localId||'')} · ${esc(c.id)}</small></span>`;b.onclick=()=>loadCard(c.id);box.appendChild(b)})
+}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+async function searchCards(q){
+ if(!q.trim())return;
+ try{const all=await getDB(), n=norm(q);let exact=all.filter(c=>norm(c.name).includes(n)||norm(c.id).includes(n)||norm(c.localId).includes(n));if(!exact.length){const words=q.toLowerCase().split(/\s+/);exact=all.filter(c=>words.some(w=>norm(c.name).includes(norm(w))))}showHits(exact);status(`${exact.length} mögliche Treffer gefunden.`)}
+ catch(e){status('Suche fehlgeschlagen: '+e.message)}
+}
+$('searchBtn').onclick=()=>searchCards($('search').value);
+$('search').addEventListener('keydown',e=>{if(e.key==='Enter')searchCards($('search').value)});
+async function recognize(file){
+ try{
+  status('Bild wird gelesen … (das kann kurz dauern)');
+  const {data}=await Tesseract.recognize(file,'eng');
+  const text=data.text||'';status('Erkannter Text: '+text.slice(0,120).replace(/\n/g,' '));
+  const all=await getDB();let words=text.split(/\s+/).map(w=>w.replace(/[^A-Za-zÀ-ÿ0-9'-]/g,'')).filter(w=>w.length>=4);
+  let ranked=all.map(c=>({c,score:words.reduce((s,w)=>s+(norm(c.name).includes(norm(w))?Math.min(w.length,10):0),0)})).filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,12).map(x=>x.c);
+  if(!ranked.length){$('search').value=words.slice(0,3).join(' ');status('Name nicht sicher erkannt. Bitte gib den Namen unten manuell ein.');return}
+  showHits(ranked);status('Bitte wähle die passende Karte aus und prüfe Set/Kartennummer.')
+ }catch(e){status('Texterkennung fehlgeschlagen. Suche bitte manuell nach dem Kartennamen.')}
+}
+$('snap').onclick=()=>{const v=$('video'),c=$('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);c.toBlob(b=>recognize(b),'image/jpeg',.92)};
+$('file').onchange=e=>{if(e.target.files[0])recognize(e.target.files[0])};
+async function loadCard(id){
+ try{status('Kartendetails werden geladen …');const r=await fetch(api+'/cards/'+encodeURIComponent(id));if(!r.ok)throw Error();selected=await r.json();
+ $('detail').classList.remove('hidden');$('cardName').textContent=selected.name;
+ $('cardImg').src=selected.image?selected.image+'/high.webp':'';
+ $('cardMeta').textContent=`Set: ${selected.set?.name||'unbekannt'} · Nummer: ${selected.localId||'?'}${selected.rarity?' · '+selected.rarity:''}`;
+ const p=selected.pricing?.cardmarket;let price=p?.trend??p?.avg30??p?.avg??null;
+ if(price!=null){$('cardPrice').textContent=Number(price).toLocaleString('de-DE',{style:'currency',currency:'EUR'});$('priceMeta').textContent='Cardmarket-Trend / Durchschnitt · Stand: '+(p.updated?new Date(p.updated*1000).toLocaleDateString('de-DE'):'Datenstand nicht angegeben')}
+ else{$('cardPrice').textContent='Kein Preis verfügbar';$('priceMeta').textContent='Für diese Karte liegen aktuell keine Cardmarket-Preisdaten vor.'}
+ $('detail').scrollIntoView({behavior:'smooth'});status('Karte gefunden.')
+ }catch(e){status('Kartendetails konnten nicht geladen werden.')}
+}
+$('save').onclick=()=>{if(!selected)return;let arr=JSON.parse(localStorage.getItem('pokescan_collection')||'[]');if(!arr.some(x=>x.id===selected.id))arr.unshift({id:selected.id,name:selected.name,image:selected.image||'',set:selected.set?.name||'',localId:selected.localId});localStorage.setItem('pokescan_collection',JSON.stringify(arr));renderCollection();status('Karte in deiner Sammlung gespeichert.')};
+function renderCollection(){let a=JSON.parse(localStorage.getItem('pokescan_collection')||'[]');$('count').textContent='('+a.length+')';$('collection').innerHTML='';if(!a.length){$('collection').textContent='Noch keine Karten gespeichert.';return}a.forEach(x=>{let d=document.createElement('div');d.className='collection-item';d.innerHTML=`${x.image?`<img src="${x.image}/low.webp">`:''}<div><b>${esc(x.name)}</b><div class="tiny">${esc(x.set)} · ${esc(x.localId)}</div></div><button class="secondary">Ansehen</button>`;d.querySelector('button').onclick=()=>loadCard(x.id);$('collection').appendChild(d)})}
+renderCollection();
+</script></body></html>
