@@ -27,7 +27,7 @@ input[type=text]{width:100%}
 .status{color:var(--muted);margin-top:12px;line-height:1.45}
 .small{font-size:13px;color:var(--muted);line-height:1.45}
 .results{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:14px;margin-top:15px}
-.card{background:#252c40;border:1px solid var(--border);border-radius:12px;padding:10px;cursor:pointer;min-width:0}
+.card{background:#252c40;border:1px solid var(--border);border-radius:12px;padding:10px;cursor:pointer;min-width:0;color:white}
 .card:hover,.card.selected{border:2px solid var(--accent);padding:9px}
 .card img{width:100%;aspect-ratio:3/4;object-fit:contain;border-radius:8px;background:#151a27}
 .card p{margin:8px 0 4px;font-weight:bold;overflow-wrap:anywhere}
@@ -42,21 +42,27 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:10px 20px 30p
 </style>
 </head>
 <body>
+
 <header>
   <div>
     <div class="brand">Poké<span>Scan</span></div>
     <div class="byline">von Janosch K.</div>
   </div>
   <select id="siteLanguage" aria-label="Website language">
-    <option value="de">Deutsch</option><option value="en">English</option>
-    <option value="fr">Français</option><option value="es">Español</option>
-    <option value="it">Italiano</option><option value="pt">Português</option>
+    <option value="de">Deutsch</option>
+    <option value="en">English</option>
+    <option value="fr">Français</option>
+    <option value="es">Español</option>
+    <option value="it">Italiano</option>
+    <option value="pt">Português</option>
   </select>
 </header>
+
 <main>
 <section class="panel">
   <h2 data-i18n="scanner">Pokémon-Karte scannen</h2>
-  <p data-i18n="scanHint">Fotografiere eine Karte oder lade ein Bild hoch.</p>
+  <p data-i18n="scanHint">Fotografiere eine Karte oder lade ein Bild hoch. Die Karte sollte möglichst groß und gerade im Bild liegen.</p>
+
   <div class="actions">
     <button id="startCamera" data-i18n="camera">Kamera starten</button>
     <button id="takePhoto" data-i18n="photo" disabled>Foto aufnehmen</button>
@@ -64,181 +70,600 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:10px 20px 30p
     <button id="uploadButton" data-i18n="upload">Bild hochladen</button>
     <input id="upload" type="file" accept="image/*" hidden>
   </div>
+
   <video id="video" autoplay playsinline></video>
   <canvas id="canvas" hidden></canvas>
   <img id="preview" alt="Kartenvorschau">
-  <div class="actions"><button id="recognize" data-i18n="recognize">Karte erkennen</button></div>
+
+  <div class="actions">
+    <button id="recognize" data-i18n="recognize">Karte erkennen</button>
+  </div>
   <p class="status" id="ocrStatus" aria-live="polite"></p>
 </section>
+
 <section class="panel">
   <h2 data-i18n="search">Internationale Kartensuche</h2>
-  <p class="small" data-i18n="searchHint">Bearbeite den erkannten Text oder gib selbst einen Namen ein.</p>
+  <p class="small" data-i18n="searchHint">Prüfe den erkannten Kartennamen oder gib selbst einen Namen ein.</p>
   <input id="searchInput" type="text" placeholder="Pokémon-Name oder Kartennummer">
-  <div class="actions"><button id="searchButton" data-i18n="searchButton">Suchen</button></div>
+  <div class="actions">
+    <button id="searchButton" data-i18n="searchButton">Suchen</button>
+  </div>
   <p class="status" id="searchStatus" aria-live="polite"></p>
   <div id="results" class="results"></div>
 </section>
+
 <section class="panel" id="details">
   <h2 data-i18n="details">Kartendetails</h2>
   <div id="detailContent"></div>
-  <div class="actions"><button id="saveCard" data-i18n="save">Zur Sammlung hinzufügen</button></div>
+  <div class="actions">
+    <button id="saveCard" data-i18n="save">Zur Sammlung hinzufügen</button>
+  </div>
 </section>
+
 <section class="panel">
   <h2 data-i18n="collection">Meine Sammlung</h2>
   <p class="small" data-i18n="collectionHint">Deine Karten werden auf diesem Gerät gespeichert.</p>
   <div class="results" id="collection"></div>
-  <div class="actions"><button id="clearCollection" data-i18n="clear">Sammlung löschen</button></div>
+  <div class="actions">
+    <button id="clearCollection" data-i18n="clear">Sammlung löschen</button>
+  </div>
 </section>
 </main>
+
 <footer>PokéScan · von Janosch K.</footer>
+
 <script>
 const translations={
-de:{scanner:"Pokémon-Karte scannen",scanHint:"Fotografiere eine Karte oder lade ein Bild hoch.",camera:"Kamera starten",photo:"Foto aufnehmen",stop:"Kamera stoppen",upload:"Bild hochladen",recognize:"Karte erkennen",search:"Internationale Kartensuche",searchHint:"Bearbeite den erkannten Text oder gib selbst einen Namen ein.",searchButton:"Suchen",details:"Kartendetails",save:"Zur Sammlung hinzufügen",collection:"Meine Sammlung",collectionHint:"Deine Karten werden auf diesem Gerät gespeichert.",clear:"Sammlung löschen",working:"Erkennung läuft …",searching:"Internationale Kartendatenbanken werden durchsucht …",found:"Gefundene Karten – tippe eine Karte an:",none:"Keine passenden Karten gefunden. Probiere einen anderen Namen oder eine Kartennummer.",error:"Fehler:",saved:"Karte wurde zur Sammlung hinzugefügt.",empty:"Noch keine Karten gespeichert.",cameraError:"Kamera konnte nicht gestartet werden. Prüfe die Kamerafreigabe.",noImage:"Bitte zuerst ein Foto aufnehmen oder ein Bild hochladen.",number:"Kartennummer",set:"Set",db:"Datenbanksprache",price:"Preisinfo",select:"Karte auswählen",selected:"Ausgewählte Karte"},
-en:{scanner:"Scan a Pokémon card",scanHint:"Take a photo or upload a card image.",camera:"Start camera",photo:"Take photo",stop:"Stop camera",upload:"Upload image",recognize:"Recognize card",search:"International card search",searchHint:"Edit the recognized text or enter a name yourself.",searchButton:"Search",details:"Card details",save:"Add to collection",collection:"My collection",collectionHint:"Your cards are saved on this device.",clear:"Clear collection",working:"Recognition in progress …",searching:"Searching international card databases …",found:"Matching cards – tap a card:",none:"No matching cards found. Try another name or card number.",error:"Error:",saved:"Card added to your collection.",empty:"No cards saved yet.",cameraError:"Could not start camera. Check camera permissions.",noImage:"Please take a photo or upload an image first.",number:"Card number",set:"Set",db:"Database language",price:"Price info",select:"Select card",selected:"Selected card"},
-fr:{scanner:"Scanner une carte Pokémon",scanHint:"Prenez une photo ou importez une image.",camera:"Démarrer la caméra",photo:"Prendre une photo",stop:"Arrêter la caméra",upload:"Importer une image",recognize:"Reconnaître la carte",search:"Recherche internationale",searchHint:"Modifiez le texte reconnu ou saisissez un nom.",searchButton:"Rechercher",details:"Détails de la carte",save:"Ajouter à la collection",collection:"Ma collection",collectionHint:"Vos cartes sont enregistrées sur cet appareil.",clear:"Vider la collection",working:"Reconnaissance en cours …",searching:"Recherche dans les bases internationales …",found:"Cartes correspondantes – touchez une carte :",none:"Aucune carte trouvée.",error:"Erreur :",saved:"Carte ajoutée.",empty:"Aucune carte enregistrée.",cameraError:"Impossible de démarrer la caméra.",noImage:"Prenez ou importez d'abord une image.",number:"Numéro",set:"Extension",db:"Langue des données",price:"Prix",select:"Choisir",selected:"Carte choisie"},
-es:{scanner:"Escanear una carta Pokémon",scanHint:"Haz una foto o sube una imagen.",camera:"Iniciar cámara",photo:"Tomar foto",stop:"Detener cámara",upload:"Subir imagen",recognize:"Reconocer carta",search:"Búsqueda internacional",searchHint:"Edita el texto reconocido o escribe un nombre.",searchButton:"Buscar",details:"Detalles de la carta",save:"Añadir a colección",collection:"Mi colección",collectionHint:"Tus cartas se guardan en este dispositivo.",clear:"Borrar colección",working:"Reconociendo …",searching:"Buscando en bases de datos internacionales …",found:"Cartas encontradas – toca una:",none:"No se encontraron cartas.",error:"Error:",saved:"Carta guardada.",empty:"Todavía no hay cartas.",cameraError:"No se pudo iniciar la cámara.",noImage:"Primero toma o sube una imagen.",number:"Número",set:"Colección",db:"Idioma de datos",price:"Precio",select:"Elegir carta",selected:"Carta seleccionada"},
-it:{scanner:"Scansiona una carta Pokémon",scanHint:"Scatta una foto o carica un'immagine.",camera:"Avvia fotocamera",photo:"Scatta foto",stop:"Ferma fotocamera",upload:"Carica immagine",recognize:"Riconosci carta",search:"Ricerca internazionale",searchHint:"Modifica il testo riconosciuto o inserisci un nome.",searchButton:"Cerca",details:"Dettagli carta",save:"Aggiungi alla collezione",collection:"La mia collezione",collectionHint:"Le carte sono salvate su questo dispositivo.",clear:"Cancella collezione",working:"Riconoscimento in corso …",searching:"Ricerca nei database internazionali …",found:"Carte trovate – seleziona una carta:",none:"Nessuna carta trovata.",error:"Errore:",saved:"Carta salvata.",empty:"Nessuna carta salvata.",cameraError:"Impossibile avviare la fotocamera.",noImage:"Scatta o carica prima un'immagine.",number:"Numero",set:"Espansione",db:"Lingua dei dati",price:"Prezzo",select:"Scegli carta",selected:"Carta selezionata"},
-pt:{scanner:"Digitalizar carta Pokémon",scanHint:"Tire uma foto ou envie uma imagem.",camera:"Iniciar câmera",photo:"Tirar foto",stop:"Parar câmera",upload:"Enviar imagem",recognize:"Reconhecer carta",search:"Pesquisa internacional",searchHint:"Edite o texto reconhecido ou digite um nome.",searchButton:"Pesquisar",details:"Detalhes da carta",save:"Adicionar à coleção",collection:"Minha coleção",collectionHint:"As cartas são guardadas neste dispositivo.",clear:"Limpar coleção",working:"Reconhecimento em andamento …",searching:"Pesquisando em bases internacionais …",found:"Cartas encontradas – toque numa carta:",none:"Nenhuma carta encontrada.",error:"Erro:",saved:"Carta guardada.",empty:"Ainda não há cartas.",cameraError:"Não foi possível iniciar a câmera.",noImage:"Tire ou envie uma imagem primeiro.",number:"Número",set:"Coleção",db:"Idioma dos dados",price:"Preço",select:"Escolher carta",selected:"Carta selecionada"}
+de:{
+scanner:"Pokémon-Karte scannen",
+scanHint:"Fotografiere eine Karte oder lade ein Bild hoch. Die Karte sollte möglichst groß und gerade im Bild liegen.",
+camera:"Kamera starten",photo:"Foto aufnehmen",stop:"Kamera stoppen",
+upload:"Bild hochladen",recognize:"Karte erkennen",
+search:"Internationale Kartensuche",
+searchHint:"Prüfe den erkannten Kartennamen oder gib selbst einen Namen ein.",
+searchButton:"Suchen",details:"Kartendetails",
+save:"Zur Sammlung hinzufügen",collection:"Meine Sammlung",
+collectionHint:"Deine Karten werden auf diesem Gerät gespeichert.",
+clear:"Sammlung löschen",working:"Erkennung läuft …",
+searching:"Internationale Kartendatenbanken werden durchsucht …",
+found:"Gefundene Karten – tippe eine Karte an:",
+none:"Keine passenden Karten gefunden. Probiere einen anderen Namen oder eine Kartennummer.",
+error:"Fehler:",saved:"Karte wurde zur Sammlung hinzugefügt.",
+empty:"Noch keine Karten gespeichert.",
+cameraError:"Kamera konnte nicht gestartet werden. Prüfe die Kamerafreigabe.",
+noImage:"Bitte zuerst ein Foto aufnehmen oder ein Bild hochladen.",
+number:"Kartennummer",set:"Set",db:"Datenbanksprache",
+price:"Preisinfo",confirmClear:"Möchtest du deine Sammlung wirklich löschen?",
+ocrHint:"Vermuteter Kartenname: ",ocrFailed:"Der Kartenname wurde nicht sicher erkannt. Bitte gib ihn selbst ein."
+},
+en:{
+scanner:"Scan a Pokémon card",
+scanHint:"Take a photo or upload an image. Keep the card large and straight in the frame.",
+camera:"Start camera",photo:"Take photo",stop:"Stop camera",
+upload:"Upload image",recognize:"Recognize card",
+search:"International card search",
+searchHint:"Check the recognized card name or enter a name yourself.",
+searchButton:"Search",details:"Card details",
+save:"Add to collection",collection:"My collection",
+collectionHint:"Your cards are saved on this device.",
+clear:"Clear collection",working:"Recognition in progress …",
+searching:"Searching international card databases …",
+found:"Matching cards – tap a card:",
+none:"No matching cards found. Try another name or card number.",
+error:"Error:",saved:"Card added to your collection.",
+empty:"No cards saved yet.",
+cameraError:"Could not start camera. Check camera permissions.",
+noImage:"Please take a photo or upload an image first.",
+number:"Card number",set:"Set",db:"Database language",
+price:"Price info",confirmClear:"Are you sure you want to clear your collection?",
+ocrHint:"Possible card name: ",ocrFailed:"The card name could not be recognized confidently. Please enter it yourself."
+},
+fr:{
+scanner:"Scanner une carte Pokémon",
+scanHint:"Prenez une photo ou importez une image. Placez la carte bien droite et assez près.",
+camera:"Démarrer la caméra",photo:"Prendre une photo",stop:"Arrêter la caméra",
+upload:"Importer une image",recognize:"Reconnaître la carte",
+search:"Recherche internationale",
+searchHint:"Vérifiez le nom reconnu ou saisissez un nom.",
+searchButton:"Rechercher",details:"Détails de la carte",
+save:"Ajouter à la collection",collection:"Ma collection",
+collectionHint:"Vos cartes sont enregistrées sur cet appareil.",
+clear:"Vider la collection",working:"Reconnaissance en cours …",
+searching:"Recherche dans les bases internationales …",
+found:"Cartes correspondantes – touchez une carte :",
+none:"Aucune carte trouvée. Essayez un autre nom ou numéro.",
+error:"Erreur :",saved:"Carte ajoutée.",
+empty:"Aucune carte enregistrée.",
+cameraError:"Impossible de démarrer la caméra.",
+noImage:"Prenez ou importez d'abord une image.",
+number:"Numéro",set:"Extension",db:"Langue des données",
+price:"Prix",confirmClear:"Voulez-vous vraiment vider votre collection ?",
+ocrHint:"Nom de carte possible : ",ocrFailed:"Le nom n'a pas été reconnu avec certitude. Saisissez-le vous-même."
+},
+es:{
+scanner:"Escanear una carta Pokémon",
+scanHint:"Haz una foto o sube una imagen. Coloca la carta recta y cerca.",
+camera:"Iniciar cámara",photo:"Tomar foto",stop:"Detener cámara",
+upload:"Subir imagen",recognize:"Reconocer carta",
+search:"Búsqueda internacional",
+searchHint:"Comprueba el nombre reconocido o escribe uno.",
+searchButton:"Buscar",details:"Detalles de la carta",
+save:"Añadir a colección",collection:"Mi colección",
+collectionHint:"Tus cartas se guardan en este dispositivo.",
+clear:"Borrar colección",working:"Reconociendo …",
+searching:"Buscando en bases de datos internacionales …",
+found:"Cartas encontradas – toca una:",
+none:"No se encontraron cartas. Prueba otro nombre o número.",
+error:"Error:",saved:"Carta guardada.",
+empty:"Todavía no hay cartas.",
+cameraError:"No se pudo iniciar la cámara.",
+noImage:"Primero toma o sube una imagen.",
+number:"Número",set:"Colección",db:"Idioma de datos",
+price:"Precio",confirmClear:"¿Seguro que quieres borrar la colección?",
+ocrHint:"Posible nombre de carta: ",ocrFailed:"No se pudo reconocer el nombre con seguridad. Escríbelo tú."
+},
+it:{
+scanner:"Scansiona una carta Pokémon",
+scanHint:"Scatta una foto o carica un'immagine. Tieni la carta dritta e abbastanza vicina.",
+camera:"Avvia fotocamera",photo:"Scatta foto",stop:"Ferma fotocamera",
+upload:"Carica immagine",recognize:"Riconosci carta",
+search:"Ricerca internazionale",
+searchHint:"Controlla il nome riconosciuto o inserisci un nome.",
+searchButton:"Cerca",details:"Dettagli carta",
+save:"Aggiungi alla collezione",collection:"La mia collezione",
+collectionHint:"Le carte sono salvate su questo dispositivo.",
+clear:"Cancella collezione",working:"Riconoscimento in corso …",
+searching:"Ricerca nei database internazionali …",
+found:"Carte trovate – seleziona una carta:",
+none:"Nessuna carta trovata. Prova un altro nome o numero.",
+error:"Errore:",saved:"Carta salvata.",
+empty:"Nessuna carta salvata.",
+cameraError:"Impossibile avviare la fotocamera.",
+noImage:"Scatta o carica prima un'immagine.",
+number:"Numero",set:"Espansione",db:"Lingua dei dati",
+price:"Prezzo",confirmClear:"Vuoi davvero cancellare la collezione?",
+ocrHint:"Possibile nome della carta: ",ocrFailed:"Il nome non è stato riconosciuto con certezza. Inseriscilo manualmente."
+},
+pt:{
+scanner:"Digitalizar carta Pokémon",
+scanHint:"Tire uma foto ou envie uma imagem. Mantenha a carta direita e próxima.",
+camera:"Iniciar câmera",photo:"Tirar foto",stop:"Parar câmera",
+upload:"Enviar imagem",recognize:"Reconhecer carta",
+search:"Pesquisa internacional",
+searchHint:"Verifique o nome reconhecido ou digite um nome.",
+searchButton:"Pesquisar",details:"Detalhes da carta",
+save:"Adicionar à coleção",collection:"Minha coleção",
+collectionHint:"As cartas são guardadas neste dispositivo.",
+clear:"Limpar coleção",working:"Reconhecimento em andamento …",
+searching:"Pesquisando em bases internacionais …",
+found:"Cartas encontradas – toque numa carta:",
+none:"Nenhuma carta encontrada. Tente outro nome ou número.",
+error:"Erro:",saved:"Carta guardada.",
+empty:"Ainda não há cartas.",
+cameraError:"Não foi possível iniciar a câmera.",
+noImage:"Tire ou envie uma imagem primeiro.",
+number:"Número",set:"Coleção",db:"Idioma dos dados",
+price:"Preço",confirmClear:"Tem certeza de que deseja limpar a coleção?",
+ocrHint:"Possível nome da carta: ",ocrFailed:"O nome não foi reconhecido com segurança. Digite-o manualmente."
+}
 };
-let siteLang=localStorage.getItem("pokescan_language")||"de",stream=null,currentImage=null,selectedCard=null,databaseCache={};
-const $=id=>document.getElementById(id),t=k=>translations[siteLang]?.[k]||translations.de[k]||k;
-const locales=["en","de","fr","es","it","pt","ja","ko","zh-tw","zh-cn","id","th"];
+
+let siteLang=localStorage.getItem("pokescan_language")||"de";
+let stream=null,currentImage=null,selectedCard=null;
+const databaseCache={};
+const locales=["de","en","fr","es","it","pt","ja","ko","zh-tw","zh-cn","id","th"];
+const $=id=>document.getElementById(id);
+const t=key=>translations[siteLang]?.[key]||translations.de[key]||key;
+
 function applyLanguage(){
- document.documentElement.lang=siteLang;
- document.querySelectorAll("[data-i18n]").forEach(el=>el.textContent=t(el.dataset.i18n));
- $("searchInput").placeholder=siteLang==="de"?"Pokémon-Name oder Kartennummer":"Pokémon name or card number";
- renderCollection();
+  document.documentElement.lang=siteLang;
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    el.textContent=t(el.dataset.i18n);
+  });
+  $("searchInput").placeholder=siteLang==="de"
+    ?"Pokémon-Name oder Kartennummer"
+    :"Pokémon name or card number";
+  renderCollection();
 }
 $("siteLanguage").value=siteLang;
-$("siteLanguage").addEventListener("change",e=>{siteLang=e.target.value;localStorage.setItem("pokescan_language",siteLang);applyLanguage()});
+$("siteLanguage").addEventListener("change",e=>{
+  siteLang=e.target.value;
+  localStorage.setItem("pokescan_language",siteLang);
+  applyLanguage();
+});
+
 async function startCamera(){
- try{
-  if(!navigator.mediaDevices?.getUserMedia)throw new Error("Camera API unavailable");
-  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false});
-  $("video").srcObject=stream;$("video").style.display="block";$("takePhoto").disabled=false;
-  $("ocrStatus").textContent="";
- }catch(e){$("ocrStatus").textContent=t("cameraError")+" "+e.message}
+  try{
+    if(!navigator.mediaDevices?.getUserMedia)throw new Error("Camera API unavailable");
+    stream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:"environment"}},audio:false
+    });
+    $("video").srcObject=stream;
+    $("video").style.display="block";
+    $("takePhoto").disabled=false;
+    $("ocrStatus").textContent="";
+  }catch(e){
+    $("ocrStatus").textContent=t("cameraError")+" "+e.message;
+  }
 }
-function stopCamera(){if(stream)stream.getTracks().forEach(x=>x.stop());stream=null;$("video").style.display="none";$("takePhoto").disabled=true}
-$("startCamera").onclick=startCamera;$("stopCamera").onclick=stopCamera;
+function stopCamera(){
+  if(stream)stream.getTracks().forEach(track=>track.stop());
+  stream=null;
+  $("video").style.display="none";
+  $("takePhoto").disabled=true;
+}
+$("startCamera").onclick=startCamera;
+$("stopCamera").onclick=stopCamera;
+
 function showImage(blob){
- if(!blob)return;currentImage=blob;
- if($("preview").dataset.url)URL.revokeObjectURL($("preview").dataset.url);
- const url=URL.createObjectURL(blob);$("preview").src=url;$("preview").dataset.url=url;$("preview").style.display="block";
- $("ocrStatus").textContent="";
+  if(!blob)return;
+  currentImage=blob;
+  if($("preview").dataset.url)URL.revokeObjectURL($("preview").dataset.url);
+  const url=URL.createObjectURL(blob);
+  $("preview").src=url;
+  $("preview").dataset.url=url;
+  $("preview").style.display="block";
+  $("ocrStatus").textContent="";
 }
 $("takePhoto").onclick=()=>{
- const v=$("video"),c=$("canvas");if(!stream||!v.videoWidth){$("ocrStatus").textContent=t("cameraError");return}
- c.width=v.videoWidth;c.height=v.videoHeight;c.getContext("2d").drawImage(v,0,0);
- c.toBlob(showImage,"image/jpeg",.95);
+  const video=$("video"),canvas=$("canvas");
+  if(!stream||!video.videoWidth){
+    $("ocrStatus").textContent=t("cameraError");
+    return;
+  }
+  canvas.width=video.videoWidth;
+  canvas.height=video.videoHeight;
+  canvas.getContext("2d").drawImage(video,0,0);
+  canvas.toBlob(showImage,"image/jpeg",.95);
 };
 $("uploadButton").onclick=()=>$("upload").click();
-$("upload").onchange=e=>{const f=e.target.files?.[0];if(f)showImage(f);e.target.value=""};
+$("upload").onchange=e=>{
+  const file=e.target.files?.[0];
+  if(file)showImage(file);
+  e.target.value="";
+};
+
 async function prepareImage(blob){
- const img=new Image(),url=URL.createObjectURL(blob);img.src=url;
- await new Promise((ok,no)=>{img.onload=ok;img.onerror=no});
- const c=document.createElement("canvas"),scale=Math.min(2,1800/Math.max(img.width,img.height));
- c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);
- const x=c.getContext("2d");x.drawImage(img,0,0,c.width,c.height);
- const p=x.getImageData(0,0,c.width,c.height);
- for(let i=0;i<p.data.length;i+=4){let g=.299*p.data[i]+.587*p.data[i+1]+.114*p.data[i+2];g=Math.max(0,Math.min(255,(g-128)*1.25+128));p.data[i]=p.data[i+1]=p.data[i+2]=g}
- x.putImageData(p,0,0);URL.revokeObjectURL(url);return c;
+  const img=new Image();
+  const url=URL.createObjectURL(blob);
+  img.src=url;
+  await new Promise((resolve,reject)=>{
+    img.onload=resolve;
+    img.onerror=reject;
+  });
+  const canvas=document.createElement("canvas");
+  const scale=Math.min(2.5,2200/Math.max(img.width,img.height));
+  canvas.width=Math.round(img.width*scale);
+  canvas.height=Math.round(img.height*scale);
+  const ctx=canvas.getContext("2d");
+  ctx.drawImage(img,0,0,canvas.width,canvas.height);
+  const pixels=ctx.getImageData(0,0,canvas.width,canvas.height);
+  for(let i=0;i<pixels.data.length;i+=4){
+    let gray=.299*pixels.data[i]+.587*pixels.data[i+1]+.114*pixels.data[i+2];
+    gray=Math.max(0,Math.min(255,(gray-128)*1.3+128));
+    pixels.data[i]=pixels.data[i+1]=pixels.data[i+2]=gray;
+  }
+  ctx.putImageData(pixels,0,0);
+  URL.revokeObjectURL(url);
+  return canvas;
 }
+
+function cleanOcrLine(line){
+  return line
+    .replace(/[^\p{L}\p{N}\s'-]/gu," ")
+    .replace(/\s+/g," ")
+    .trim();
+}
+function isLikelyCardName(line){
+  const value=cleanOcrLine(line);
+  if(value.length<3||value.length>28)return false;
+  if(/\d{2,}/.test(value))return false;
+  if(/zerh[aä]ckseln|angriff|attack|schaden|damage|schw[aä]che|weakness|resistenz|resistance|rückzug|retreat|entwickl|stage|basis|trainer|energie|energy|regel|rule/i.test(value))return false;
+  return /[\p{L}]/u.test(value);
+}
+
 $("recognize").onclick=async()=>{
- if(!currentImage){$("ocrStatus").textContent=t("noImage");return}
- $("ocrStatus").textContent=t("working");
- try{
-  const c=await prepareImage(currentImage),worker=await Tesseract.createWorker(["eng","deu"]);
-  const result=await worker.recognize(c);await worker.terminate();
-  const lines=(result.data.text||"").split(/\n/).map(x=>x.trim()).filter(x=>/[A-Za-zÀ-ÿ]/.test(x)&&x.length>2);
-  const candidate=lines.sort((a,b)=>b.length-a.length)[0]||"";
-  $("searchInput").value=candidate.replace(/[^\p{L}\p{N}\s'-]/gu,"").trim();
-  $("ocrStatus").textContent=candidate?("Erkannter Text: "+candidate+" – bitte prüfen und anschließend suchen."):"Kein eindeutiger Text erkannt. Bitte Kartennamen eingeben.";
- }catch(e){$("ocrStatus").textContent=t("error")+" "+e.message}
-};
-function norm(s){return String(s||"").toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^\p{L}\p{N}]/gu,"")}
-async function loadDatabase(locale){
- if(databaseCache[locale])return databaseCache[locale];
- const r=await fetch(`https://api.tcgdex.net/v2/${locale}/cards`);
- if(!r.ok)throw new Error("API "+locale+" "+r.status);
- return databaseCache[locale]=await r.json();
-}
-$("searchButton").onclick=searchCards;
-$("searchInput").addEventListener("keydown",e=>{if(e.key==="Enter")searchCards()});
-async function searchCards(){
- const query=$("searchInput").value.trim();if(!query)return;
- $("searchStatus").textContent=t("searching");$("results").innerHTML="";$("details").style.display="none";selectedCard=null;
- const q=norm(query),found=new Map();
- // Suche in allen unterstützten Sprachdatenbanken; Ergebnisse werden anhand der Karten-ID zusammengeführt.
- for(const locale of locales){
+  if(!currentImage){
+    $("ocrStatus").textContent=t("noImage");
+    return;
+  }
+  $("recognize").disabled=true;
+  $("ocrStatus").textContent=t("working");
+  let worker=null;
   try{
-   const cards=await loadDatabase(locale);
-   for(const c of cards){
-    const name=norm(c.name),id=norm(c.id),local=norm(c.localId);
-    if(name.includes(q)||id.includes(q)||local===q){
-     const key=c.id;
-     if(!found.has(key))found.set(key,{...c,_locale:locale});
+    const canvas=await prepareImage(currentImage);
+    worker=await Tesseract.createWorker(["deu","eng"]);
+
+    // Der obere Bereich wird zuerst geprüft, weil dort der Kartenname steht.
+    const top=document.createElement("canvas");
+    top.width=canvas.width;
+    top.height=Math.max(1,Math.round(canvas.height*.34));
+    top.getContext("2d").drawImage(
+      canvas,0,0,canvas.width,top.height,
+      0,0,top.width,top.height
+    );
+
+    const topResult=await worker.recognize(top);
+    let lines=(topResult.data.text||"").split(/\n/);
+    let candidates=lines
+      .map(cleanOcrLine)
+      .filter(isLikelyCardName);
+
+    // Wenn oben nichts Brauchbares erkannt wurde, wird das ganze Foto geprüft.
+    if(!candidates.length){
+      const fullResult=await worker.recognize(canvas);
+      lines=(fullResult.data.text||"").split(/\n/);
+      candidates=lines
+        .map(cleanOcrLine)
+        .filter(isLikelyCardName);
     }
-   }
-  }catch(err){console.warn("Locale skipped:",locale,err)}
- }
- const results=[...found.values()].slice(0,60);
- renderResults(results);
- $("searchStatus").textContent=results.length?`${t("found")} ${results.length}`:t("none");
+
+    const candidate=candidates[0]||"";
+    $("searchInput").value=candidate;
+    $("ocrStatus").textContent=candidate
+      ?t("ocrHint")+candidate+" – bitte prüfen und suchen."
+      :t("ocrFailed");
+  }catch(e){
+    $("ocrStatus").textContent=t("error")+" "+e.message;
+  }finally{
+    if(worker)await worker.terminate();
+    $("recognize").disabled=false;
+  }
+};
+
+function norm(value){
+  return String(value||"")
+    .toLocaleLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^\p{L}\p{N}]/gu,"");
 }
-function imageUrl(card,size="low"){return card.image?`${card.image}/${size}.webp`:null}
+
+// Kleine Schreibfehler bei Pokémon-Namen werden toleriert.
+function editDistance(a,b){
+  if(Math.abs(a.length-b.length)>3)return 99;
+  let previous=Array.from({length:b.length+1},(_,i)=>i);
+  for(let i=1;i<=a.length;i++){
+    const current=[i];
+    for(let j=1;j<=b.length;j++){
+      current[j]=Math.min(
+        current[j-1]+1,
+        previous[j]+1,
+        previous[j-1]+(a[i-1]===b[j-1]?0:1)
+      );
+    }
+    previous=current;
+  }
+  return previous[b.length];
+}
+function isCloseName(name,query){
+  if(!name||!query)return false;
+  if(name.includes(query)||query.includes(name))return true;
+  if(query.length<5||name.length<5)return false;
+  return editDistance(name,query)<=Math.max(1,Math.floor(query.length*.2));
+}
+
+async function loadDatabase(locale){
+  if(databaseCache[locale])return databaseCache[locale];
+  const response=await fetch(`https://api.tcgdex.net/v2/${locale}/cards`);
+  if(!response.ok)throw new Error("API "+locale+" "+response.status);
+  const data=await response.json();
+  databaseCache[locale]=data;
+  return data;
+}
+
+$("searchButton").onclick=searchCards;
+$("searchInput").addEventListener("keydown",e=>{
+  if(e.key==="Enter")searchCards();
+});
+
+async function searchCards(){
+  const query=$("searchInput").value.trim();
+  if(!query)return;
+  const q=norm(query);
+  if(!q)return;
+
+  $("searchButton").disabled=true;
+  $("searchStatus").textContent=t("searching");
+  $("results").innerHTML="";
+  $("details").style.display="none";
+  selectedCard=null;
+
+  const found=new Map();
+  let databasesWorked=0;
+
+  // Die Datenbanken werden in kleinen Gruppen geladen, um unnötige
+  // gleichzeitige Anfragen zu vermeiden.
+  for(let i=0;i<locales.length;i+=3){
+    const group=locales.slice(i,i+3);
+    const loaded=await Promise.all(group.map(async locale=>{
+      try{
+        return {locale,cards:await loadDatabase(locale)};
+      }catch(error){
+        console.warn("Datenbank nicht erreichbar:",locale,error);
+        return null;
+      }
+    }));
+
+    for(const entry of loaded){
+      if(!entry)continue;
+      databasesWorked++;
+      for(const card of entry.cards){
+        const name=norm(card.name);
+        const id=norm(card.id);
+        const localId=norm(card.localId);
+        const exactNumber=localId===q||id.endsWith(q);
+        const nameMatch=isCloseName(name,q);
+
+        if(exactNumber||nameMatch){
+          const key=card.id;
+          if(!found.has(key)){
+            found.set(key,{...card,_locale:entry.locale});
+          }
+        }
+      }
+    }
+  }
+
+  const results=[...found.values()].slice(0,60);
+  renderResults(results);
+
+  if(results.length){
+    $("searchStatus").textContent=t("found")+" "+results.length;
+  }else if(!databasesWorked){
+    $("searchStatus").textContent=t("error")+" Die Kartendatenbanken sind momentan nicht erreichbar.";
+  }else{
+    $("searchStatus").textContent=t("none");
+  }
+  $("searchButton").disabled=false;
+}
+
+function imageUrl(card,size="low"){
+  return card.image?`${card.image}/${size}.webp`:null;
+}
+
 function renderResults(cards){
- const root=$("results");root.innerHTML="";
- cards.forEach(card=>{
-  const item=document.createElement("button");item.type="button";item.className="card";item.style.textAlign="left";item.style.color="white";
-  const src=imageUrl(card);
-  if(src){const img=document.createElement("img");img.loading="lazy";img.src=src;img.alt=card.name||"Pokémon card";img.onerror=()=>img.style.display="none";item.appendChild(img)}
-  const name=document.createElement("p");name.textContent=card.name||card.id;item.appendChild(name);
-  const id=document.createElement("span");id.className="small";id.textContent=card.id;item.appendChild(id);
-  const locale=document.createElement("span");locale.className="small";locale.textContent=" · "+card._locale;item.appendChild(locale);
-  item.addEventListener("click",()=>selectCard(card));root.appendChild(item);
- });
+  const root=$("results");
+  root.innerHTML="";
+  cards.forEach(card=>{
+    const item=document.createElement("button");
+    item.type="button";
+    item.className="card";
+    item.style.textAlign="left";
+
+    const src=imageUrl(card);
+    if(src){
+      const img=document.createElement("img");
+      img.loading="lazy";
+      img.src=src;
+      img.alt=card.name||"Pokémon card";
+      img.onerror=()=>img.style.display="none";
+      item.appendChild(img);
+    }
+
+    const name=document.createElement("p");
+    name.textContent=card.name||card.id;
+    item.appendChild(name);
+
+    const id=document.createElement("span");
+    id.className="small";
+    id.textContent=card.id;
+    item.appendChild(id);
+
+    const locale=document.createElement("span");
+    locale.className="small";
+    locale.textContent=" · "+card._locale;
+    item.appendChild(locale);
+
+    item.addEventListener("click",()=>selectCard(card));
+    root.appendChild(item);
+  });
 }
+
 async function selectCard(card){
- selectedCard=card;$("details").style.display="block";$("detailContent").textContent="…";
- $("details").scrollIntoView({behavior:"smooth",block:"start"});
- try{
-  const r=await fetch(`https://api.tcgdex.net/v2/${card._locale}/cards/${encodeURIComponent(card.id)}`);
-  const detail=r.ok?await r.json():card;selectedCard={...detail,_locale:card._locale};
-  const root=$("detailContent");root.innerHTML="";
-  const src=imageUrl(detail);
-  if(src){const img=document.createElement("img");img.src=src;img.alt=detail.name||"Pokémon card";img.onerror=()=>img.style.display="none";root.appendChild(img)}
-  const text=document.createElement("div");text.className="detailText";
-  const h=document.createElement("h3");h.textContent=detail.name||detail.id;text.appendChild(h);
-  const p=document.createElement("p");p.textContent=`${t("number")}: ${detail.localId||"—"} · ${t("set")}: ${detail.set?.name||"—"} · ${t("db")}: ${card._locale}`;text.appendChild(p);
-  const price=detail.pricing?.cardmarket?.avg??detail.pricing?.tcgplayer?.normal?.marketPrice;
-  if(price!=null){const pp=document.createElement("p");pp.textContent=`${t("price")}: ${price}`;text.appendChild(pp)}
-  root.appendChild(text);
- }catch(e){$("detailContent").textContent=detailFallback(card)}
+  selectedCard=card;
+  $("details").style.display="block";
+  $("detailContent").textContent="…";
+  $("details").scrollIntoView({behavior:"smooth",block:"start"});
+
+  try{
+    const response=await fetch(
+      `https://api.tcgdex.net/v2/${card._locale}/cards/${encodeURIComponent(card.id)}`
+    );
+    const detail=response.ok?await response.json():card;
+    selectedCard={...detail,_locale:card._locale};
+
+    const root=$("detailContent");
+    root.innerHTML="";
+
+    const src=imageUrl(detail);
+    if(src){
+      const img=document.createElement("img");
+      img.src=src;
+      img.alt=detail.name||"Pokémon card";
+      img.onerror=()=>img.style.display="none";
+      root.appendChild(img);
+    }
+
+    const text=document.createElement("div");
+    text.className="detailText";
+
+    const heading=document.createElement("h3");
+    heading.textContent=detail.name||detail.id;
+    text.appendChild(heading);
+
+    const info=document.createElement("p");
+    info.textContent=
+      `${t("number")}: ${detail.localId||"—"} · `+
+      `${t("set")}: ${detail.set?.name||"—"} · `+
+      `${t("db")}: ${card._locale}`;
+    text.appendChild(info);
+
+    const price=detail.pricing?.cardmarket?.avg??
+      detail.pricing?.tcgplayer?.normal?.marketPrice;
+
+    if(price!=null){
+      const priceText=document.createElement("p");
+      priceText.textContent=`${t("price")}: ${price}`;
+      text.appendChild(priceText);
+    }
+    root.appendChild(text);
+  }catch(error){
+    $("detailContent").textContent=detail.name||detail.id;
+  }
 }
-function detailFallback(card){return card.name||card.id}
+
 $("saveCard").onclick=()=>{
- if(!selectedCard)return;
- const list=JSON.parse(localStorage.getItem("pokescan_collection")||"[]");
- if(!list.some(c=>c.id===selectedCard.id)){list.push(selectedCard);localStorage.setItem("pokescan_collection",JSON.stringify(list))}
- $("ocrStatus").textContent=t("saved");renderCollection();
+  if(!selectedCard)return;
+  const list=JSON.parse(localStorage.getItem("pokescan_collection")||"[]");
+  if(!list.some(card=>card.id===selectedCard.id)){
+    list.push(selectedCard);
+    localStorage.setItem("pokescan_collection",JSON.stringify(list));
+  }
+  $("ocrStatus").textContent=t("saved");
+  renderCollection();
 };
+
 function renderCollection(){
- const root=$("collection");if(!root)return;root.innerHTML="";
- const list=JSON.parse(localStorage.getItem("pokescan_collection")||"[]");
- if(!list.length){root.textContent=t("empty");return}
- list.forEach(card=>{
-  const item=document.createElement("div");item.className="card";const src=imageUrl(card);
-  if(src){const img=document.createElement("img");img.loading="lazy";img.src=src;img.alt=card.name||"Pokémon card";item.appendChild(img)}
-  const p=document.createElement("p");p.textContent=card.name||card.id;item.appendChild(p);root.appendChild(item);
- });
+  const root=$("collection");
+  if(!root)return;
+  root.innerHTML="";
+  const list=JSON.parse(localStorage.getItem("pokescan_collection")||"[]");
+
+  if(!list.length){
+    root.textContent=t("empty");
+    return;
+  }
+
+  list.forEach(card=>{
+    const item=document.createElement("div");
+    item.className="card";
+    const src=imageUrl(card);
+
+    if(src){
+      const img=document.createElement("img");
+      img.loading="lazy";
+      img.src=src;
+      img.alt=card.name||"Pokémon card";
+      item.appendChild(img);
+    }
+
+    const name=document.createElement("p");
+    name.textContent=card.name||card.id;
+    item.appendChild(name);
+    root.appendChild(item);
+  });
 }
+
 $("clearCollection").onclick=()=>{
- if(confirm(siteLang==="de"?"Möchtest du deine Sammlung wirklich löschen?":"Are you sure you want to clear your collection?")){
-  localStorage.removeItem("pokescan_collection");renderCollection();
- }
+  if(confirm(t("confirmClear"))){
+    localStorage.removeItem("pokescan_collection");
+    renderCollection();
+  }
 };
-applyLanguage();renderCollection();
+
+applyLanguage();
+renderCollection();
 </script>
 </body>
 </html>
